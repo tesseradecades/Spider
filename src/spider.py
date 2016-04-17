@@ -1,6 +1,6 @@
 __author__ = 'Nathan Evans'
 
-import argparse, discover
+import argparse, discover, output
 
 CUSTOM_AUTH = []
 COMMON_WORDS = []
@@ -70,7 +70,8 @@ def runCommand(command, url):
 		global CUSTOM_AUTH
 		global COMMON_WORDS
 		print("discover")
-		discover.crawl(url, auth=CUSTOM_AUTH, commonWords=COMMON_WORDS)
+		found = discover.crawl(url, auth=CUSTOM_AUTH, commonWords=COMMON_WORDS)
+		output.output(found)
 	elif(command=="test"):
 		print("test")
 	else:

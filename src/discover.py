@@ -17,6 +17,7 @@ def crawl(url, auth=[], commonWords=[]):
 	COMMON_WORDS = commonWords
 	print(COMMON_WORDS)
 	crawlHelper(url)
+	return DISCOVERED
 
 def crawlHelper(url):
 	global DISCOVERED
