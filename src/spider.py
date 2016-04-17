@@ -4,7 +4,7 @@ import argparse
 
 COMMAND = None
 URL = None
-CUSTOM_AUTH = None
+CUSTOM_AUTH = []
 COMMON_WORDS = []
 VECTORS = []
 SENSITIVE = []
@@ -34,7 +34,10 @@ def main():
 	print(URL)
 
 	global CUSTOM_AUTH
-	CUSTOM_AUTH = args.custom_auth
+	CUSTOM_AUTH.append(args.custom_auth)
+	f = open('../res/customauths/'+args.custom_auth+'.txt', 'r')
+	for word in f:
+		CUSTOM_AUTH.append(word.rstrip())
 	print(CUSTOM_AUTH)
 	
 	global COMMON_WORDS
