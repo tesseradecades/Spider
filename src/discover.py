@@ -12,10 +12,10 @@ COMMON_WORDS = []
 def crawl(url, auth=[], commonWords=[]):
 	global AUTH
 	AUTH = auth
-	print(AUTH)
+	
 	global COMMON_WORDS
 	COMMON_WORDS = commonWords
-	print(COMMON_WORDS)
+	
 	crawlHelper(url)
 	return DISCOVERED
 
