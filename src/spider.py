@@ -24,53 +24,47 @@ def main():
 	url = args.url
 	if( url[:16] == "http://localhost"):
 		url = ("http://127.0.0.1" + url[17:])
-	print(url)
-
+	
 	global CUSTOM_AUTH
 	if(args.custom_auth):
 		CUSTOM_AUTH.append(args.custom_auth)
 		f = open('../res/customauths/'+args.custom_auth+'.txt', 'r')
 		for word in f:
 			CUSTOM_AUTH.append(word.rstrip())
-	print(CUSTOM_AUTH)
-	
+		
 	global COMMON_WORDS
 	if(args.common_words):
 		for word in args.common_words:
 			COMMON_WORDS.append(word.rstrip())
-	print(COMMON_WORDS)
-	
+		
 	global VECTORS
 	if(args.vectors):
 		for word in args.vectors:
 			VECTORS.append(word.rstrip())
-	print(VECTORS)
-	
+		
 	global SENSITIVE
 	if(args.sensitive):
 		for word in args.sensitive:
 			SENSITIVE.append(word.rstrip())
-	print(SENSITIVE)
-	
+		
 	global RANDOM
 	if(type(args.random) is str):
 		if(args.random.lower() == 'true'):
 			RANDOM = True
-	print(RANDOM)
 	
 	global SLOW
 	if(args.slow):
 		SLOW = args.slow
-	print(SLOW)
-
+	
 	runCommand(args.command.lower(), url)
 	
 def runCommand(command, url):
 	if(command=="discover"):
 		global CUSTOM_AUTH
 		global COMMON_WORDS
-		print("discover")
-		found = discover.crawl(url, auth=CUSTOM_AUTH, commonWords=COMMON_WORDS)
+		
+		found = ['discover']
+		found.append(discover.crawl(url, auth=CUSTOM_AUTH, commonWords=COMMON_WORDS))
 		output.output(found)
 	elif(command=="test"):
 		print("test")
