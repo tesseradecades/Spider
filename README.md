@@ -39,4 +39,3 @@ optional arguments:
                         response is considered "slow". Default is 500
                         milliseconds
 
-C:\Users\Nathan\Desktop\Projects\Spider\src>
