@@ -39,3 +39,19 @@ optional arguments:
                         response is considered "slow". Default is 500
                         milliseconds
 
+
+# TODO
+Discover
+	Custom Authentication
+	Page Discovery
+		Link Discovery
+		Page Guessing
+	Input Discovery
+		Parse URLs
+		Form Parameters
+		Cookies
+PageTesting
+	Lack of Sanitization
+	Sensitive Data Leaked
+	Delayed Response
+	HTTP Response Codes
