@@ -1,6 +1,6 @@
 __author__ = 'Nathan Evans'
 
-import argparse
+import argparse, discover
 
 COMMAND = None
 URL = None
@@ -34,10 +34,11 @@ def main():
 	print(URL)
 
 	global CUSTOM_AUTH
-	CUSTOM_AUTH.append(args.custom_auth)
-	f = open('../res/customauths/'+args.custom_auth+'.txt', 'r')
-	for word in f:
-		CUSTOM_AUTH.append(word.rstrip())
+	if(args.custom_auth):
+		CUSTOM_AUTH.append(args.custom_auth)
+		f = open('../res/customauths/'+args.custom_auth+'.txt', 'r')
+		for word in f:
+			CUSTOM_AUTH.append(word.rstrip())
 	print(CUSTOM_AUTH)
 	
 	global COMMON_WORDS
@@ -68,6 +69,22 @@ def main():
 	if(args.slow):
 		SLOW = args.slow
 	print(SLOW)
+
+	runCommand()
+	
+def runCommand():
+	global COMMAND
+	if(COMMAND=="discover"):
+		global URL
+		global CUSTOM_AUTH
+		global COMMON_WORDS
+		print("discover")
+		discover.crawl(URL, auth=CUSTOM_AUTH, commonWords=COMMON_WORDS)
+	elif(COMMAND=="test"):
+		print("test")
+	else:
+		print("Invalid command:\t"+COMMAND+"\nTry discover or test")
+
 
 if __name__ == "__main__":
 	main()
