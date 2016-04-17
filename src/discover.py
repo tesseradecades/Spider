@@ -21,13 +21,19 @@ def crawl(url, auth=[], commonWords=[]):
 
 def crawlHelper(url):
 	global DISCOVERED
-	r = requests.get(url)
+	if( not checkDiscoveredForUrl(url)):
+		r = requests.get(url)
 
-	DISCOVERED.append(r)
+		DISCOVERED.append(r)
 	
-	for u in getUrlsOnPage(r):
-		print(u)
-
+		for u in getUrlsOnPage(r):
+			testLen = len(r.url) - 1
+			if(r.url[:testLen] == u[:testLen]):
+				print(u)
+				crawlHelper(u)
+	else:
+		print("\nAlready discovered:\t"+url+"\n")
+			
 def getUrlsOnPage(r):
 	links = []
 	soup = BeautifulSoup(r.text, "html.parser")
@@ -35,3 +41,10 @@ def getUrlsOnPage(r):
 		link = urljoin(r.url, u.get('href'))
 		links.append(link)
 	return links
+
+def checkDiscoveredForUrl(url):
+	global DISCOVERED
+	for r in DISCOVERED:
+		if(r.url == url):
+			return True
+	return False
