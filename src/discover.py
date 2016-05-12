@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 from urlparse import urljoin
 
 AUTH = []
+BASE_URL = ''
 DISCOVERED = []
 COMMON_WORDS = []
 COOKIES = None
@@ -13,6 +14,9 @@ COOKIES = None
 def crawl(url, auth=[], commonWords=[]):
 	global AUTH
 	AUTH = auth
+	
+	global BASE_URL
+	BASE_URL = url
 	
 	global COMMON_WORDS
 	COMMON_WORDS = commonWords
@@ -24,20 +28,25 @@ def crawlHelper(url):
 	global COOKIES
 	global DISCOVERED
 	if( not checkDiscoveredForUrl(url)):
+		print("CRAWL HELPER")
 		r = requests.get(url, cookies=COOKIES)
-		COOKIES = r.cookies.get_dict()
-		
+		#COOKIES = r.cookies.get_dict()
+		for x in r.history:
+			if( not checkDiscoveredForUrl(x.url)):
+				DISCOVERED.append(x)
+		print(r.url)
 		DISCOVERED.append(r)
 	
+		global BASE_URL
 		for u in getUrlsOnPage(r):
-			testLen = len(r.url) - 1
-			if(r.url[:testLen] == u[:testLen]):
-				print(u)
+			testLen = len(BASE_URL) - 1
+			if((BASE_URL[:testLen] == u[:testLen]) & ("logout" not in u)):
 				crawlHelper(u)
-		if(AUTH):
+		if((len(AUTH) == 3) and ("/login" in r.url) and (("/"+AUTH[0]+"/") in r.url)):
 			login(r)
 	else:
-		print("\nAlready discovered:\t"+url+"\n")
+		#print("\nAlready discovered:\t"+url+"\n")
+		pass
 			
 def getUrlsOnPage(r):
 	links = []
@@ -49,39 +58,41 @@ def getUrlsOnPage(r):
 
 def checkDiscoveredForUrl(url):
 	global DISCOVERED
+	from HTMLParser import HTMLParser
+	h = HTMLParser()
 	for r in DISCOVERED:
-		if(r.url == url):
-			return True
+		for u in ([r]+r.history):
+			if(h.escape(url) == u.url):
+				return True
+	#print("u:\t"+h.escape(url))
 	return False
 
 def login(r):
 	global AUTH
-	if( AUTH[0] in r.url):
-		inputs = getInputsOnPage(r)
-		userPassLog = []
-		userPassLog.append(guess.findInput( ["username", "user"], inputs))
-		userPassLog.append(guess.findInput( ["password", "pass"], inputs))
-		userPassLog.append(guess.findInput( ["login", "loginbutton"], inputs))
-		if(None not in userPassLog):
-			global COOKIES
-			loginInfo = {
-				userPassLog[0].get("name") : AUTH[1],
-				userPassLog[1].get("name") : AUTH[2],
-				userPassLog[2].get("name") : userPassLog[2].get("value")
-			}
-			with requests.Session() as s:
-				p = s.post(r.url, data=loginInfo, cookies=COOKIES)
-				q = s.get(p.url, cookies=COOKIES)
-				COOKIES = s.cookies.get_dict()
-				crawlHelper(q.url)"""
-				print("\n\n\nLOGGED IN SUCCESSFULLY!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n\n")
-				for x in userPassLog:
-					print("\n\n")
-					print(x)
-				quit()"""
-				
-		else:
-			print("Couldn't find login params")
+	global COOKIES
+	#if( (("/"+AUTH[0]+"/") in r.url) & ("/login" in r.url)):
+	inputs = getInputsOnPage(r)
+	userPassLog = []
+	userPassLog.append(guess.findInput( ["username", "user"], inputs))
+	userPassLog.append(guess.findInput( ["password", "pass"], inputs))
+	userPassLog.append(guess.findInput( ["login", "loginbutton"], inputs))
+	if(not (None in userPassLog)):
+		loginInfo = {
+			userPassLog[0].get("name") : AUTH[1],
+			userPassLog[1].get("name") : AUTH[2],
+			userPassLog[2].get("name") : userPassLog[2].get("value")
+		}
+
+		with requests.Session() as s:
+			p = s.post(r.url, data=loginInfo)
+			q = s.get(p.url, cookies=COOKIES)
+			COOKIES = s.cookies.get_dict()
+			print("LOGIN")
+			print(COOKIES)
+			crawlHelper(q.url)
+			print("LOGIN CRAWL ENDED")			
+	else:
+		print("Couldn't find login params")
 
 def getInputsOnPage(r):
 	inputs = []
