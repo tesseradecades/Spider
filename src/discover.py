@@ -1,6 +1,6 @@
 __author__ = "Nathan Evans"
 
-import guess, requests, threading
+import guess, requests, unescapeString
 from bs4 import BeautifulSoup
 from urlparse import urljoin
 
@@ -94,12 +94,11 @@ def getUrlsOnPage(r):
 
 def checkDiscoveredForUrl(url):
 	global DISCOVERED
-
 	for r in DISCOVERED:
 		for u in ([r]+r.history):
-			if(url == u.url):
+			if(unescapeString.unescape(url) == u.url):
 				return True
-	#print("u:\t"+h.escape(url))
+	print("u:\t"+unescapeString.unescape(url))
 	return False
 
 def login(r):
