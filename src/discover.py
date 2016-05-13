@@ -59,22 +59,19 @@ def crawlHelper(url):
 			testLen = len(BASE_URL) - 1
 			if((BASE_URL[:testLen] == u[:testLen]) & ("logout" not in u)):
 				inThread = findInactiveThread(spiderLegs)
-				if(len(spiderLegs) < 8):
-					newLeg = spiderLeg(u)
-					spiderLegs.append(newLeg)
-					newLeg.start()
-				elif( inThread != -1):
+				if( inThread != -1):
 					deadLeg = spiderLegs[inThread]
 					deadLeg.startUrl = u
 					deadLeg.run()
 				else:
-					crawlHelper(u)
+					newLeg = spiderLeg(u)
+					spiderLegs.append(newLeg)
+					newLeg.start()
 		if((len(AUTH) == 3) and ("/login" in r.url) and (("/"+AUTH[0]+"/") in r.url)):
 			login(r)
 	else:
 		discoLock.release()
-		#print("\nAlready discovered:\t"+url+"\n")
-		pass
+
 			
 def findInactiveThread(threadList):
 	i = 0
@@ -98,13 +95,11 @@ def checkDiscoveredForUrl(url):
 		for u in ([r]+r.history):
 			if(unescapeString.unescape(url) == u.url):
 				return True
-	#print("u:\t"+unescapeString.unescape(url))
 	return False
 
 def login(r):
 	global AUTH
 	global COOKIES
-	#if( (("/"+AUTH[0]+"/") in r.url) & ("/login" in r.url)):
 	inputs = getInputsOnPage(r)
 	userPassLog = []
 	userPassLog.append(guess.findInput( ["username", "user"], inputs))

@@ -65,7 +65,10 @@ def runCommand(command, url):
 		
 		found = ['discover']
 		found.append(discover.crawl(url, auth=CUSTOM_AUTH, commonWords=COMMON_WORDS))
+<<<<<<< HEAD
 		#print found
+=======
+>>>>>>> ad8b648204617059648b9b83b7ff206c771dc583
 		output.output(found)
 	elif(command=="test"):
 		print("test")
