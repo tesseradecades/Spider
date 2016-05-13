@@ -23,7 +23,8 @@ def main():
 
 	url = args.url
 	if( url[:16] == "http://localhost"):
-		url = ("http://127.0.0.1" + url[17:])
+		url = ("http://127.0.0.1" + url[16:])
+	print url
 	
 	global CUSTOM_AUTH
 	if(args.custom_auth):
@@ -60,17 +61,22 @@ def main():
 	
 def runCommand(command, url):
 	if(command=="discover"):
-		global CUSTOM_AUTH
-		global COMMON_WORDS
-		
 		found = ['discover']
-		found.append(discover.crawl(url, auth=CUSTOM_AUTH, commonWords=COMMON_WORDS))
+		found.append(discoverCommand(url))
 		output.output(found)
 	elif(command=="test"):
-		print("test")
+		found = ['test']
+		found.append(testCommand(discoverCommand(url)))
+		output.output(found)
 	else:
 		print("Invalid command:\t"+command+"\nTry discover or test")
 
+def discoverCommand(url):
+	global CUSTOM_AUTH
+	global COMMON_WORDS
+	return discover.crawl(url, auth=CUSTOM_AUTH, commonWords=COMMON_WORDS)
 
+def testCommand(pages=[]):
+	return pages
 if __name__ == "__main__":
 	main()

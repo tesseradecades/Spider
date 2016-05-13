@@ -3,7 +3,7 @@ __author__ = "Nathan Evans"
 import datetime
 
 def output(found=[]):
-	o = open("../output/"+datetime.datetime.strftime(datetime.datetime.now(), "%Y%m%d%H%M%S")+".html",'w')
+	o = open("../output/"+found[0]+datetime.datetime.strftime(datetime.datetime.now(), "%Y%m%d%H%M%S")+".html",'w')
 	
 	if( found[0] == 'discover'):
 		o.write(compileDiscoverOutput(found[1]))
