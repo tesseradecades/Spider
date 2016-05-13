@@ -1,6 +1,6 @@
 __author__ = 'Nathan Evans'
 
-import argparse, discover, output
+import argparse, discover, output, threading
 
 CUSTOM_AUTH = []
 COMMON_WORDS = []
@@ -65,6 +65,7 @@ def runCommand(command, url):
 		
 		found = ['discover']
 		found.append(discover.crawl(url, auth=CUSTOM_AUTH, commonWords=COMMON_WORDS))
+		print found
 		output.output(found)
 	elif(command=="test"):
 		print("test")

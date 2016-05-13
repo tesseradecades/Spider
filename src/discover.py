@@ -35,6 +35,9 @@ def crawl(url, auth=[], commonWords=[]):
 	fstLeg = spiderLeg(url)
 	spiderLegs.append(fstLeg)
 	fstLeg.start()
+	
+	for l in spiderLegs:
+		l.join()
 	return DISCOVERED
 
 def crawlHelper(url):
