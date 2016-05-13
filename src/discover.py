@@ -50,7 +50,7 @@ def crawlHelper(url):
 		for x in r.history:
 			if( not checkDiscoveredForUrl(x.url)):
 				DISCOVERED.append(x)
-		#print(r.url)
+		print(r.url)
 		DISCOVERED.append(r)
 		discoLock.release()
 	
