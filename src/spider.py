@@ -65,7 +65,7 @@ def runCommand(command, url):
 		
 		found = ['discover']
 		found.append(discover.crawl(url, auth=CUSTOM_AUTH, commonWords=COMMON_WORDS))
-		print found
+		#print found
 		output.output(found)
 	elif(command=="test"):
 		print("test")

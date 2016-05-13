@@ -45,12 +45,12 @@ def crawlHelper(url):
 	global DISCOVERED
 	discoLock.acquire()
 	if( not checkDiscoveredForUrl(url)):
-		print("CRAWL HELPER")
+		#print("CRAWL HELPER")
 		r = requests.get(url, cookies=COOKIES)
 		for x in r.history:
 			if( not checkDiscoveredForUrl(x.url)):
 				DISCOVERED.append(x)
-		print(r.url)
+		#print(r.url)
 		DISCOVERED.append(r)
 		discoLock.release()
 	
