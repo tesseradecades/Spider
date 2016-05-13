@@ -1,15 +1,26 @@
 __author__ = "Nathan Evans"
 
-import guess, requests
+import guess, requests, threading
 from bs4 import BeautifulSoup
 from urlparse import urljoin
 
 AUTH = []
 BASE_URL = ''
+discoLock = threading.Lock()
 DISCOVERED = []
 COMMON_WORDS = []
 COOKIES = None
 
+spiderLegs = []
+
+class spiderLeg(threading.Thread):
+	def __init__(self, startUrl):
+		threading.Thread.__init__(self)
+		self.startUrl = startUrl
+		
+	def run(self):
+		#print spiderLegs
+		crawlHelper(self.startUrl)
 
 def crawl(url, auth=[], commonWords=[]):
 	global AUTH
@@ -21,32 +32,54 @@ def crawl(url, auth=[], commonWords=[]):
 	global COMMON_WORDS
 	COMMON_WORDS = commonWords
 	
-	crawlHelper(url)
+	fstLeg = spiderLeg(url)
+	spiderLegs.append(fstLeg)
+	fstLeg.start()
 	return DISCOVERED
 
 def crawlHelper(url):
 	global COOKIES
 	global DISCOVERED
+	discoLock.acquire()
 	if( not checkDiscoveredForUrl(url)):
 		print("CRAWL HELPER")
 		r = requests.get(url, cookies=COOKIES)
-		#COOKIES = r.cookies.get_dict()
 		for x in r.history:
 			if( not checkDiscoveredForUrl(x.url)):
 				DISCOVERED.append(x)
 		print(r.url)
 		DISCOVERED.append(r)
+		discoLock.release()
 	
 		global BASE_URL
 		for u in getUrlsOnPage(r):
 			testLen = len(BASE_URL) - 1
 			if((BASE_URL[:testLen] == u[:testLen]) & ("logout" not in u)):
-				crawlHelper(u)
+				inThread = findInactiveThread(spiderLegs)
+				if(len(spiderLegs) < 8):
+					newLeg = spiderLeg(u)
+					spiderLegs.append(newLeg)
+					newLeg.start()
+				elif( inThread != -1):
+					deadLeg = spiderLegs[inThread]
+					deadLeg.startUrl = u
+					deadLeg.run()
+				else:
+					crawlHelper(u)
 		if((len(AUTH) == 3) and ("/login" in r.url) and (("/"+AUTH[0]+"/") in r.url)):
 			login(r)
 	else:
+		discoLock.release()
 		#print("\nAlready discovered:\t"+url+"\n")
 		pass
+			
+def findInactiveThread(threadList):
+	i = 0
+	for t in threadList:
+		if(not t.isAlive()):
+			return i
+		i+=1
+	return -1
 			
 def getUrlsOnPage(r):
 	links = []
@@ -58,11 +91,10 @@ def getUrlsOnPage(r):
 
 def checkDiscoveredForUrl(url):
 	global DISCOVERED
-	from HTMLParser import HTMLParser
-	h = HTMLParser()
+
 	for r in DISCOVERED:
 		for u in ([r]+r.history):
-			if(h.escape(url) == u.url):
+			if(url == u.url):
 				return True
 	#print("u:\t"+h.escape(url))
 	return False
