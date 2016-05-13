@@ -30,7 +30,6 @@ def crawlHelper(url):
 	if( not checkDiscoveredForUrl(url)):
 		print("CRAWL HELPER")
 		r = requests.get(url, cookies=COOKIES)
-		#COOKIES = r.cookies.get_dict()
 		for x in r.history:
 			if( not checkDiscoveredForUrl(x.url)):
 				DISCOVERED.append(x)
@@ -45,7 +44,6 @@ def crawlHelper(url):
 		if((len(AUTH) == 3) and ("/login" in r.url) and (("/"+AUTH[0]+"/") in r.url)):
 			login(r)
 	else:
-		#print("\nAlready discovered:\t"+url+"\n")
 		pass
 			
 def getUrlsOnPage(r):
@@ -58,13 +56,10 @@ def getUrlsOnPage(r):
 
 def checkDiscoveredForUrl(url):
 	global DISCOVERED
-	from HTMLParser import HTMLParser
-	h = HTMLParser()
 	for r in DISCOVERED:
 		for u in ([r]+r.history):
-			if(h.escape(url) == u.url):
+			if(url == u.url):
 				return True
-	#print("u:\t"+h.escape(url))
 	return False
 
 def login(r):
