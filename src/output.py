@@ -16,7 +16,7 @@ def compileDiscoverOutput(discovered):
 	for r in discovered[:len(discovered)-1]:
 		pg = "<li>"+r.url+"</li>"
 		out = out + pg
-	out += "<li>"+"COOKIES:\t"+discovered[len(discovered)-1]+"</li>"
+	out += "<li>"+"COOKIES:\t"+str(discovered[len(discovered)-1])+"</li>"
 	return out
 
 def compileTestOutput(tested):
