@@ -1,6 +1,6 @@
 __author__ = 'Nathan Evans'
 
-import argparse, discover, output
+import argparse, discover, output, test
 
 CUSTOM_AUTH = []
 COMMON_WORDS = []

@@ -1,7 +1,6 @@
 __author__ = "Nathan Evans"
 
-import guess, requests, threading, unescapeString
-from bs4 import BeautifulSoup
+import guess, requests, threading, unescapeString, utility
 from urlparse import urljoin
 
 AUTH = []
@@ -55,16 +54,19 @@ def crawlHelper(url):
 		discoLock.release()
 	
 		global BASE_URL
-		for u in getUrlsOnPage(r):
+		for a in utility.getAllOnPage(r.text, "a"):
+		
+			joinUrl = urljoin(r.url, a.get('href'))
+		
 			testLen = len(BASE_URL) - 1
-			if((BASE_URL[:testLen] == u[:testLen]) & ("logout" not in u)):
+			if((BASE_URL[:testLen] == joinUrl[:testLen]) & ("logout" not in joinUrl)):
 				inThread = findInactiveThread(spiderLegs)
 				if( inThread != -1):
 					deadLeg = spiderLegs[inThread]
-					deadLeg.startUrl = u
+					deadLeg.startUrl = joinUrl
 					deadLeg.run()
 				else:
-					newLeg = spiderLeg(u)
+					newLeg = spiderLeg(joinUrl)
 					spiderLegs.append(newLeg)
 					newLeg.start()
 		if((len(AUTH) == 3) and ("/login" in r.url) and (("/"+AUTH[0]+"/") in r.url)):
@@ -80,14 +82,6 @@ def findInactiveThread(threadList):
 			return i
 		i+=1
 	return -1
-			
-def getUrlsOnPage(r):
-	links = []
-	soup = BeautifulSoup(r.text, "html.parser")
-	for u in soup.find_all('a'):
-		link = urljoin(r.url, u.get('href'))
-		links.append(link)
-	return links
 
 def checkDiscoveredForUrl(url):
 	global DISCOVERED
@@ -100,7 +94,7 @@ def checkDiscoveredForUrl(url):
 def login(r):
 	global AUTH
 	global COOKIES
-	inputs = getInputsOnPage(r)
+	inputs = (utility.getAllOnPage(r.text, "input")+utility.getAllOnPage(r.text, "option"))
 	userPassLog = []
 	userPassLog.append(guess.findInput( ["username", "user"], inputs))
 	userPassLog.append(guess.findInput( ["password", "pass"], inputs))
@@ -116,16 +110,9 @@ def login(r):
 			p = s.post(r.url, data=loginInfo)
 			q = s.get(p.url, cookies=COOKIES)
 			COOKIES = s.cookies.get_dict()
-			print("LOGIN")
+			print("SUCCESSFUL LOGIN")
 			print(COOKIES)
 			crawlHelper(q.url)
 			print("LOGIN CRAWL ENDED")			
 	else:
 		print("Couldn't find login params")
-
-def getInputsOnPage(r):
-	inputs = []
-	soup = BeautifulSoup(r.text, "html.parser")
-	for i in (soup.find_all('input')+soup.find_all('option')):
-		inputs.append(i)
-	return inputs
