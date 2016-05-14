@@ -1,6 +1,6 @@
 __author__ = 'Nathan Evans'
 
-import argparse, discover, output, threading
+import argparse, discover, output
 
 CUSTOM_AUTH = []
 COMMON_WORDS = []
@@ -77,6 +77,6 @@ def discoverCommand(url):
 	return discover.crawl(url, auth=CUSTOM_AUTH, commonWords=COMMON_WORDS)
 
 def testCommand(pages=[]):
-	return pages
+	return test.testPages(pages, VECTORS, SENSITIVE, RANDOM, SLOW)
 if __name__ == "__main__":
 	main()
