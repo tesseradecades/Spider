@@ -13,9 +13,10 @@ def output(found=[]):
 
 def compileDiscoverOutput(discovered):
 	out = ''
-	for r in discovered:
+	for r in discovered[:len(discovered)-1]:
 		pg = "<li>"+r.url+"</li>"
 		out = out + pg
+	out += "<li>"+"COOKIES:\t"+discovered[len(discovered)-1]+"</li>"
 	return out
 
 def compileTestOutput(tested):

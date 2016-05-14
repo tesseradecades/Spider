@@ -17,8 +17,8 @@ def main():
 	argParser.add_argument("--common-words", type=argparse.FileType(mode='r'), help="--common-words=file Newline-delimited file of common words to be used in page guessing and input guessing.")
 	argParser.add_argument("--vectors", type=argparse.FileType(mode='r'), help="--vectors=file Newline-delimited file of common exploits to vulnerabilities.")
 	argParser.add_argument("--sensitive", type=argparse.FileType(mode='r'), help="--sensitive=file Newline-delimited file data that should never be leaked. It's assumed that this data is in the application's database (e.g. test data), but is not reported in any response.")
-	argParser.add_argument("--random", type=bool, help="--random=[true|false] When off, try each input to each page systematically. When on, choose a random page, then a random input field and test all vectors. Default: false.")
-	argParser.add_argument("--slow", type=int, help="--slow=500 Number of milliseconds considered when a response is considered \"slow\". Default is 500 milliseconds")
+	argParser.add_argument("--random", help="--random=[true|false] When off, try each input to each page systematically. When on, choose a random page, then a random input field and test all vectors. Default: false.")
+	argParser.add_argument("--slow", type=float, help="--slow=500 Number of milliseconds considered when a response is considered \"slow\". Default is 500 milliseconds")
 	args = argParser.parse_args()
 
 	url = args.url
@@ -52,10 +52,11 @@ def main():
 	if(type(args.random) is str):
 		if(args.random.lower() == 'true'):
 			RANDOM = True
-	
+	print(RANDOM)
+
 	global SLOW
 	if(args.slow):
-		SLOW = args.slow
+		SLOW = float(args.slow)
 	
 	runCommand(args.command.lower(), url)
 	
@@ -77,6 +78,7 @@ def discoverCommand(url):
 	return discover.crawl(url, auth=CUSTOM_AUTH, commonWords=COMMON_WORDS)
 
 def testCommand(pages=[]):
+	print("test")
 	return test.testPages(pages, VECTORS, SENSITIVE, RANDOM, SLOW)
 if __name__ == "__main__":
 	main()

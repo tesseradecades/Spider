@@ -1,6 +1,6 @@
 __author__ = "Nathan Evans"
 
-import guess, requests, threading, unescapeString, utility
+import guess, requests, threading, utility
 from urlparse import urljoin
 
 AUTH = []
@@ -37,7 +37,9 @@ def crawl(url, auth=[], commonWords=[]):
 	
 	for l in spiderLegs:
 		l.join()
-	return DISCOVERED
+	
+	
+	return DISCOVERED+[COOKIES]
 
 def crawlHelper(url):
 	global COOKIES
@@ -87,7 +89,7 @@ def checkDiscoveredForUrl(url):
 	global DISCOVERED
 	for r in DISCOVERED:
 		for u in ([r]+r.history):
-			if(unescapeString.unescape(url) == u.url):
+			if(utility.unescape(url) == u.url):
 				return True
 	return False
 
