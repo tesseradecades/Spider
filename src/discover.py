@@ -156,9 +156,9 @@ def crawlHelper(url):
 					deadLeg = spiderLegs[inThread]
 					deadLeg.startUrl = joinUrl
 					deadLeg.run()
-				"""otherwise, create a new one, and tell it to begin its crawl
-				from the found url"""
 				else:
+					"""otherwise, create a new one, and tell it to begin its crawl
+					from the found url"""
 					newLeg = spiderLeg(joinUrl)
 					spiderLegs.append(newLeg)
 					newLeg.start()
@@ -198,7 +198,7 @@ def login(r):
 	
 	#find all input and option fields on the page
 	inputs = utility.getAllOnPage(r.text, "input")
-	input+= utility.getAllOnPage(r.text, "option")
+	inputs+= utility.getAllOnPage(r.text, "option")
 	
 	"""of the above inputs, narrow them down to the ones that are most likely
 	to be used for loggin in"""

@@ -63,7 +63,7 @@ def testPages(pages=[], vectors=[], sensitive=[], rand=False, slow=500):
 			successfulVectors.append("No successful attacks")
 		retList.append(successfulVectors)"""
 	else:
-		#a list conataining pages w/o the cookies
+		#a list containing pages w/o the cookies
 		trueTestPages = pages[:len(pages)-1]
 		for p in trueTestPages:
 			retList.append(testPage(p, vectors, sensitive, slow, cookie))
@@ -98,29 +98,34 @@ def testPage(tP, vectors=[], sensitive=[], slow=500.0, cook=''):
 	successfulVectors=[]
 	iPuts = utility.getAllOnPage(tP.text, "input")
 	iPuts+= utility.getAllOnPage(tP.text, "options")
+	if(len(iPuts)==0):
+		successfulVectors.append("no input fields to attack")
+	time_out = (float(slow)/1000.0)
+	print(time_out)
+	print(cook)
 	
 	for v in vectors:
 		print("vector:\t"+v)
 		for i in iPuts:
 			iName = str(i.get('name'))
-			#print("input:\t"+str(iName))
+			print("input:\t"+str(iName))
+			r=None
 			try:
-				print("try")
-				
 				r = requests.post(tP.url, data={iName:v}, timeout=(float(slow)/1000.0), cookies=cook)
-				if(checkAttackSuccess(r, sensitive)):
-					successfulVectors.append(iName+":\t"+v)
 			except requests.exceptions.ConnectTimeout:
 				if( not dosExcept in successfulVectors):
 					successfulVectors.append(dosExcept)
 			except requests.exceptions.ReadTimeout:
 				if( not dosExcept in successfulVectors):
 					successfulVectors.append(dosExcept)
+			if(checkAttackSuccess(tP, r, sensitive)):
+					print("SUCCESSFUL VECTOR!")
+					successfulVectors.append(iName+":    "+v)
 	if(len(successfulVectors)==0):
 		successfulVectors.append("No Successful Attacks")
 	retList.append(successfulVectors)
 	return retList
 
-def checkAttackSuccess(r, sensitive=[]):
+def checkAttackSuccess(tP, r, sensitive=[]):
 	print("checkAttackSuccess")
 	return True
