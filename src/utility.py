@@ -5,7 +5,16 @@ from bs4 import BeautifulSoup
 """
 A module of utility methods that are common across modules
 """
-
+escapeDict = { "%3E": ">", "%3C": "<" }
+unescapeDict = { ">" : "%3E", "<" : "%3C"}
+def escape(eString=''):
+	global escapeDict
+	retString = eString
+	for k in escapeDict:
+		if(k in retString):
+			holdMe = retString.split(k)
+			retString = holdMe.join(escapeDict[k])
+	return retString
 """
 returns a list of objects representing all tags of the specified type on a page
 
@@ -24,11 +33,11 @@ uString = a string containing escaped characters
 returns = a string containing all of the characters of uString, but unescaped
 """
 def unescape(uString=''):
-	swapDict = { ">" : "%3E", "<" : "%3C"}
+	global unescapeDict
 	retString = ''
 	for c in uString:
-		if( swapDict.has_key(c) ):
-			retString+=swapDict[c]
+		if( unescapeDict.has_key(c) ):
+			retString+=unescapeDict[c]
 		else:
 			retString+=c
 	return retString

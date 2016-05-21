@@ -84,8 +84,8 @@ def compileOutputTree():
 		sorted = sortOutputObjects(DISCOVERED)
 		for s in sorted[1:]:
 			sorted[0].addChildPage(s)
-		print("\n")
-		sorted[0].printTree()
+		#print("\n")
+		#sorted[0].printTree()
 		DISCOVERED = [sorted[0]]
 	
 def sortOutputObjects(outputObjects=[]):

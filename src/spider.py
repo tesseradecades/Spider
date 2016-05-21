@@ -68,7 +68,7 @@ def runCommand(command, url):
 		found = ['discover']
 		found.append(discoverCommand(url))
 		print(found)
-		#output.output(found)
+		output.output(found)
 	elif(command=="test"):
 		found = ['test']
 		found.append(testCommand(discoverCommand(url)))
