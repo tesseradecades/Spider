@@ -81,8 +81,8 @@ def discoverCommand(url):
 	global COMMON_WORDS
 	return discover.crawl(url, auth=CUSTOM_AUTH, commonWords=COMMON_WORDS)
 
-def testCommand(pages=[]):
+def testCommand(pagesAndCookies=[]):
 	print("test")
-	return test.testPages(pages, VECTORS, SENSITIVE, RANDOM, SLOW)
+	return test.testPages(pagesAndCookies, VECTORS, SENSITIVE, RANDOM, SLOW)
 if __name__ == "__main__":
 	main()

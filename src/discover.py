@@ -145,11 +145,11 @@ def crawl(url, auth=[], commonWords=[]):
 	
 	for l in spiderLegs:
 		l.join()
-	
+	numPages = len(DISCOVERED)
 	#compile outputTree
 	compileOutputTree()
 	
-	return DISCOVERED+[COOKIES]
+	return DISCOVERED+[COOKIES, numPages]
 
 """
 Recursively crawls through the web application, adding valid response objects
