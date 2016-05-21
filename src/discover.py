@@ -40,7 +40,7 @@ COMMON_WORDS = []
 The cookies gathered from crawling the web application. Should be passed to all
 requests in this file to ensure the crawler remains logged in where necessary
 """
-COOKIES = None
+COOKIES = None#{'security': 'low'}
 
 """
 The list of spiderLeg threads. Used for coordinating the threads
