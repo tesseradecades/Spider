@@ -1,6 +1,6 @@
 __author__ = "Nathan Evans"
 
-import guess, requests, threading, utility
+import guess, output, requests, threading, utility
 from urlparse import urljoin
 
 """
@@ -42,6 +42,8 @@ requests in this file to ensure the crawler remains logged in where necessary
 """
 COOKIES = None#{'security': 'low'}
 
+OUTPUT_TREE = None
+
 """
 The list of spiderLeg threads. Used for coordinating the threads
 """
@@ -71,11 +73,45 @@ returns - a boolean, True if the url has already been found, False otherwise
 def checkDiscoveredForUrl(url):
 	global DISCOVERED
 	for r in DISCOVERED:
-		for u in ([r]+r.history):
+		for u in ([r.response]+r.response.history):
 			if(utility.unescape(url) == u.url):
 				return True
 	return False
 
+def compileOutputTree():
+	global DISCOVERED
+	if(len(DISCOVERED) > 1):
+		sorted = sortOutputObjects(DISCOVERED)
+		for s in sorted[1:]:
+			sorted[0].addChildPage(s)
+		print("\n")
+		sorted[0].printTree()
+		DISCOVERED = [sorted[0]]
+	
+def sortOutputObjects(outputObjects=[]):
+	if(len(outputObjects)==0):
+		return outputObjects
+	
+	pivot = outputObjects[len(outputObjects)/2]
+	first = outputObjects[0]
+	last = outputObjects[len(outputObjects)-1]
+	less = []
+	eq = []
+	more = []
+	if((first.response.url >= pivot.response.url) and (first.response.url <= last.response.url)):
+		pivot = first
+	elif((last.response.url >= pivot.response.url)and(last.response.url <= first.response.url)):
+		pivot = last
+	
+	for o in outputObjects:
+		if(o.response.url < pivot.response.url):
+			less.append(o)
+		elif(o.response.url > pivot.response.url):
+			more.append(o)
+		else:
+			eq.append(o)
+	return (sortOutputObjects(less) + eq + sortOutputObjects(more))
+	
 """
 A method to populate the global variables BASE_URL, AUTH, and COMMON_WORDS, and
 initialize a spiderLeg to begin crawling the web application.
@@ -110,6 +146,9 @@ def crawl(url, auth=[], commonWords=[]):
 	for l in spiderLegs:
 		l.join()
 	
+	#compile outputTree
+	compileOutputTree()
+	
 	return DISCOVERED+[COOKIES]
 
 """
@@ -132,9 +171,9 @@ def crawlHelper(url):
 		#in case of redirects, add all responses from r's history to DISCOVERED
 		for x in r.history:
 			if( not checkDiscoveredForUrl(x.url)):
-				DISCOVERED.append(x)
+				DISCOVERED.append(output.outputTree(x))
 		print(r.url)
-		DISCOVERED.append(r)
+		DISCOVERED.append(output.outputTree(r))
 		discoLock.release()
 	
 		global BASE_URL
