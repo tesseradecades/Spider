@@ -23,6 +23,7 @@ class outputTree():
 			c.printTree()
 			
 def output(found=[]):
+	print("\nFOUND\n"+str(found))
 	o = open("../output/"+found[0]+datetime.datetime.strftime(datetime.datetime.now(), "%Y%m%d%H%M%S")+".html",'w')
 	"""
 	if( found[0] == 'discover'):

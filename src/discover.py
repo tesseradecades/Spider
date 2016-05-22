@@ -86,7 +86,7 @@ def compileOutputTree():
 			sorted[0].addChildPage(s)
 		#print("\n")
 		#sorted[0].printTree()
-		DISCOVERED = [sorted[0]]
+		return sorted[0]
 	
 def sortOutputObjects(outputObjects=[]):
 	if(len(outputObjects)==0):
@@ -147,9 +147,10 @@ def crawl(url, auth=[], commonWords=[]):
 		l.join()
 	numPages = len(DISCOVERED)
 	#compile outputTree
-	compileOutputTree()
-	
-	return DISCOVERED+[COOKIES, numPages]
+	#compileOutputTree()
+	retList = [compileOutputTree(), COOKIES]
+	retList.append(DISCOVERED)
+	return retList
 
 """
 Recursively crawls through the web application, adding valid response objects
