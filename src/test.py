@@ -1,6 +1,6 @@
 __author__="Nathan Evans"
 
-import random, requests, utility
+import random, requests, threading, utility
 
 """
 a list of messages you would expect to see if the system being tested caught
@@ -8,14 +8,24 @@ you when you tried to hack it
 """
 caughtHackingList = ["Hacking attempt detected and logged."]
 
+testThreads = []
+treeLock = threading.Lock()
+class TestThread(threading.Thread):
+	def __init__(self, startObject, vectors, sensitive, slow, cookie):
+		threading.Thread.__init__(self)
+		self.startObject = startObject
+		self.vectors = vectors
+		self.sensitive = sensitive
+		self.slow = slow
+		self.cookie = cookie
+	def run(self):
+		recursiveTestPage(self.startObject, self.vectors, self.sensitive, self.slow, self.cookie)
+
 """
 A method to see if the system being tested has successfully caught the spider
 trying to test it.
-
 tP - a response object representing the page that has been tested
-
 r - the response object that was created when testing the page
-
 return - an integer value. -1 if the spider was not caught hacking, else, the
 index of the output message in caughtHackingList
 """
@@ -33,11 +43,8 @@ def caughtHacking(tP, r):
 
 """
 A method to check if a particular attack was successful
-
 tP - a response object representing the page that has been tested
-
 r - the response object that was created when testing the page
-
 return - a boolean value, True if the attack was successful, else False
 """
 def checkAttackSuccess(tP, r, sensitive=[]):
@@ -52,40 +59,57 @@ def checkAttackSuccess(tP, r, sensitive=[]):
 		
 	return False
 
+def recursiveTestPage(testTree, vectors=[], sensitive=[], slow=500.0, cook=''):
+	#print("to be implemented later")
+	iPuts = utility.getAllOnPage(testTree.response.text, "input")
+	iPuts+= utility.getAllOnPage(testTree.response.text, "options")
+	testPage(testTree, iPuts, vectors, sensitive, slow, cook)
+	for c in testTree.childPages:
+		#see if any of the spiderLegs are sleeping threads
+		inThread = utility.findInactiveThread(testThreads)
+		
+		#if so, tell it to begin crawling from the found url
+		if( inThread != -1):
+			deadThread = testThreads[inThread]
+			deadThread.startObject = c
+			deadThread.run()
+		else:
+			"""otherwise, create a new one, and tell it to begin its crawl
+			from the found url"""
+			newThread = TestThread(c, vectors, sensitive, slow, cook)
+			testThreads.append(newThread)
+			newThread.start()
+		#recursiveTestPage(c, vectors, sensitive, slow, cook)
+	
 """
 tests a single page for the vulnerabilities represented by a list of vectors
-
 tP - the page to be tested
-
 vectors - the list of vectors to test on the page
-
 sensitive - a list of strings that. None of these strings should appear on the
 test page unless one of the tested attack vectors is successful in attacking
 the application
-
 slow - the number of milliseconds that the spider should wait before a response
 should be considered too slow. Should the response time exceed this amount, the
 web page will be noted as having a potential denial of service vulnerability
-
 cook - the cookies the may be needed to remain logged into the system while
 testing
-
 returns - a 2-D list representation of the test page and any attack vectors
 that were successful. ex) [response, ["Potential Denial of Service", "'or'1'=='1',..."]]
 """
-def testPage(tP, vectors=[], sensitive=[], slow=500.0, cook=''):
-	print("Test page:\t"+tP.url)
+def testPage(tP, iPuts=[], vectors=[], sensitive=[], slow=500.0, cook=''):
+	print("Test page:\t"+tP.response.url)
 	retList = [tP]
 	dosExcept = "Potential Denial of Service"
 	successfulVectors=[]
+	"""
 	iPuts = utility.getAllOnPage(tP.text, "input")
-	iPuts+= utility.getAllOnPage(tP.text, "options")
+	iPuts+= utility.getAllOnPage(tP.text, "options")"""
 	if(len(iPuts)==0):
 		successfulVectors.append("no input fields to attack")
 	time_out = (float(slow)/1000.0)
 	#print(time_out)
 	#print(cook)
-	
+	#print("BROKEN BEFORE FOR LOOP")
 	for v in vectors:
 		#print("vector:\t"+v)
 		for i in iPuts:
@@ -93,89 +117,72 @@ def testPage(tP, vectors=[], sensitive=[], slow=500.0, cook=''):
 			#print("input:\t"+str(iName))
 			r=None
 			try:
-				r = requests.post(tP.url, data={iName:v}, timeout=(float(slow)/1000.0), cookies=cook)
+				r = requests.post(tP.response.url, data={iName:v}, timeout=(float(slow)/1000.0), cookies=cook)
 			except requests.exceptions.ConnectTimeout:
 				if( not dosExcept in successfulVectors):
 					successfulVectors.append(dosExcept)
 			except requests.exceptions.ReadTimeout:
 				if( not dosExcept in successfulVectors):
 					successfulVectors.append(dosExcept)
-			caught = caughtHacking(tP, r)
-			if(checkAttackSuccess(tP, r, sensitive)):
+			caught = caughtHacking(tP.response, r)
+			if(checkAttackSuccess(tP.response, r, sensitive)):
 				print("SUCCESSFUL VECTOR!")
 				successfulVectors.append(iName+":    "+v)
 			elif(caught != -1):
 				print(caughtHackingList[caught])
 				successfulVectors.append("Caught Hacking input:"+iName+" with vector:"+v)
+	#print("BROKEN AFTER FOR LOOP")
 	if(len(successfulVectors)==0):
 		successfulVectors.append("No Successful Attacks")
-	retList.append(successfulVectors)
-	return retList
+	tP.vulnerabilities=successfulVectors
 
 """
 tests a given list of web pages for common vulnerabilities
-
 pages - a list of response objects representing web pages
-
 vectors - a list of input vulnerabilities to test for
-
 sensitive - a list of strings that should only be visible on the web page if a
 vector has successfully attacked the application
-
 rand - a boolean value to determine whether to randomly test a single input
 field on a single web page for a single vector (if True), or to test every
 field on every web page for every vector in vectors (if False)
-
 slow - the number of milliseconds that the spider should wait before a response
 should be considered too slow. Should the response time exceed this amount, the
 web page will be noted as having a potential denial of service vulnerability
-
 returns - a 3-D list representing the tested pages and the vulnerabilities they
 were found to have. ex) [[response, ["Potential Denial of Service", "'or'1'=='1'", ...]]]
 """
-def testPages(pages=[], vectors=[], sensitive=[], rand=False, slow=500):
+def testPages(pagesAndCookies=[], vectors=[], sensitive=[], rand=False, slow=500):
 	print("testPages")
-	if(len(pages) == 0):
+	if(len(pagesAndCookies) == 0):
 		print("no pages")
-		return pages
+		return pagesAndCookies
 	retList = []
 	
+	discoTree = pagesAndCookies[0]
 	#get the necessary cookie in case the spider needs to be logged in
-	cookie = pages[len(pages)-1]
+	cookie = pagesAndCookies[1]
+	discoList = pagesAndCookies[2]
 	if(rand):
 		print("True rando")
-		tP = pages[random.randrange(len(pages)-1)]
-		retList.append(testPage(tP, vectors, sensitive, slow, cookie))
-		"""retList = [testPage]
-		successfulVectors=[]
-		for v in vectors:
-			#get inputs here
-			iPuts = utility.getAllOnPage(testPage.text, "input")
-			iPuts += utility.getAllOnPage(testPage.text, "options")
-			
-			if(len(iPuts) == 0):
-				break
-			i = iPuts[random.randrange(len(iPuts))]
-			
-			try:
-				r = requests.post(testPage.url, data={i.get('name'):v}, timeout=(float(slow)/1000.0), cookies=pages[len(pages)-1])
-				#check if attack was successful here
-				if(checkAttackSuccess(r, sensitive)):
-					successfulVectors.append(i.get('name')+":\t"+v)
-				
-			except requests.exceptions.ConnectTimeout:
-				if( not ("Potential Denial of Service" in successfulVectors)):
-					successfulVectors.append("Potential Denial of Service")
-			except requests.exceptions.ReadTimeout:
-				if( not ("Potential Denial of Service" in successfulVectors)):
-					successfulVectors.append("Potential Denial of Service")
-		if(len(successfulVectors)==0):
-			successfulVectors.append("No successful attacks")
-		retList.append(successfulVectors)"""
+		tP = random.choice(discoList)#[random.randrange(len(discoList)-1)]
+		iPuts = utility.getAllOnPage(tP.response.text, "input")
+		iPuts+= utility.getAllOnPage(tP.response.text, "options")
+		if(len(iPuts) > 0):
+			iPuts = [random.choice(iPuts)]
+		else:
+			iPuts = []
+		testVector = random.choice(vectors)#[random.randrange(len(vectors)-1)]
+		testPage(tP, iPuts, [testVector], sensitive, slow, cookie)
+		#print("LOOKING FOR TP VULNS HERE")
+		#print(tP.vulnerabilities)
+		retList = [tP]+pagesAndCookies[1:]
 	else:
-		#a list containing pages w/o the cookies
-		trueTestPages = pages[:len(pages)-1]
-		for p in trueTestPages:
-			retList.append(testPage(p, vectors, sensitive, slow, cookie))
-	print retList
+		#recursiveTestPage(discoTree, vectors, sensitive, slow, cookie)
+		firstThread = TestThread(discoTree, vectors, sensitive, slow, cookie)
+		testThreads.append(firstThread)
+		firstThread.start()
+		
+		for t in testThreads:
+			t.join()
+		return pagesAndCookies
 	return retList

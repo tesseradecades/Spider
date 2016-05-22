@@ -1,6 +1,6 @@
 __author__ = "Nathan Evans"
 
-import guess, requests, threading, utility
+import guess, output, requests, threading, utility
 from urlparse import urljoin
 
 """
@@ -42,6 +42,8 @@ requests in this file to ensure the crawler remains logged in where necessary
 """
 COOKIES = None#{'security': 'low'}
 
+OUTPUT_TREE = None
+
 """
 The list of spiderLeg threads. Used for coordinating the threads
 """
@@ -71,11 +73,45 @@ returns - a boolean, True if the url has already been found, False otherwise
 def checkDiscoveredForUrl(url):
 	global DISCOVERED
 	for r in DISCOVERED:
-		for u in ([r]+r.history):
+		for u in ([r.response]+r.response.history):
 			if(utility.unescape(url) == u.url):
 				return True
 	return False
 
+def compileOutputTree():
+	global DISCOVERED
+	if(len(DISCOVERED) > 1):
+		sorted = sortOutputObjects(DISCOVERED)
+		for s in sorted[1:]:
+			sorted[0].addChildPage(s)
+		#print("\n")
+		#sorted[0].printTree()
+		return sorted[0]
+	
+def sortOutputObjects(outputObjects=[]):
+	if(len(outputObjects)==0):
+		return outputObjects
+	
+	pivot = outputObjects[len(outputObjects)/2]
+	first = outputObjects[0]
+	last = outputObjects[len(outputObjects)-1]
+	less = []
+	eq = []
+	more = []
+	if((first.response.url >= pivot.response.url) and (first.response.url <= last.response.url)):
+		pivot = first
+	elif((last.response.url >= pivot.response.url)and(last.response.url <= first.response.url)):
+		pivot = last
+	
+	for o in outputObjects:
+		if(o.response.url < pivot.response.url):
+			less.append(o)
+		elif(o.response.url > pivot.response.url):
+			more.append(o)
+		else:
+			eq.append(o)
+	return (sortOutputObjects(less) + eq + sortOutputObjects(more))
+	
 """
 A method to populate the global variables BASE_URL, AUTH, and COMMON_WORDS, and
 initialize a spiderLeg to begin crawling the web application.
@@ -109,8 +145,12 @@ def crawl(url, auth=[], commonWords=[]):
 	
 	for l in spiderLegs:
 		l.join()
-	
-	return DISCOVERED+[COOKIES]
+	numPages = len(DISCOVERED)
+	#compile outputTree
+	#compileOutputTree()
+	retList = [compileOutputTree(), COOKIES]
+	retList.append(DISCOVERED)
+	return retList
 
 """
 Recursively crawls through the web application, adding valid response objects
@@ -132,9 +172,9 @@ def crawlHelper(url):
 		#in case of redirects, add all responses from r's history to DISCOVERED
 		for x in r.history:
 			if( not checkDiscoveredForUrl(x.url)):
-				DISCOVERED.append(x)
+				DISCOVERED.append(output.outputTree(x))
 		print(r.url)
-		DISCOVERED.append(r)
+		DISCOVERED.append(output.outputTree(r))
 		discoLock.release()
 	
 		global BASE_URL
@@ -149,7 +189,7 @@ def crawlHelper(url):
 			#if the found url is an onsite link
 			if((BASE_URL[:testLen] == joinUrl[:testLen]) & ("logout" not in joinUrl)):
 				#see if any of the spiderLegs are sleeping threads
-				inThread = findInactiveThread(spiderLegs)
+				inThread = utility.findInactiveThread(spiderLegs)
 				
 				#if so, tell it to begin crawling from the found url
 				if( inThread != -1):
@@ -168,22 +208,6 @@ def crawlHelper(url):
 	#otherwise, release the lock
 	else:
 		discoLock.release()
-
-"""
-Searches a list for sleeping threads
-
-threadList - the list to be searched
-
-return - if all threads in the list are alive, return -1, else return the index
-of the first sleeping thread in the list
-"""
-def findInactiveThread(threadList=[]):
-	i = 0
-	for t in threadList:
-		if(not t.isAlive()):
-			return i
-		i+=1
-	return -1
 
 """
 attempt to log into the web application being tested from the url represented
@@ -230,17 +254,5 @@ def login(r):
 			#continue crawling the app from the logged in perspective
 			crawlHelper(q.url)
 			print("LOGIN CRAWL ENDED")
-			
-			"""
-			inThread = findInactiveThread(spiderLegs)
-			if( inThread != -1):
-				deadLeg = spiderLegs[inThread]
-				deadLeg.startUrl = q.url
-				deadLeg.run()
-			else:
-				newLeg = spiderLeg(q.url)
-				spiderLegs.append(newLeg)
-				newLeg.start()
-			"""
 	else:
 		print("Couldn't find login params")
