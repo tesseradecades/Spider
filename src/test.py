@@ -47,7 +47,12 @@ def checkAttackSuccess(tP, r, sensitive=[]):
 	return False
 
 def recursiveTestPage(testTree, vectors=[], sensitive=[], slow=500.0, cook=''):
-	print("to be implemented later")
+	#print("to be implemented later")
+	iPuts = utility.getAllOnPage(testTree.response.text, "input")
+	iPuts+= utility.getAllOnPage(testTree.response.text, "options")
+	testPage(testTree, iPuts, vectors, sensitive, slow, cook)
+	for c in testTree.childPages:
+		recursiveTestPage(c, vectors, sensitive, slow, cook)
 	
 """
 tests a single page for the vulnerabilities represented by a list of vectors
@@ -77,7 +82,7 @@ def testPage(tP, iPuts=[], vectors=[], sensitive=[], slow=500.0, cook=''):
 	time_out = (float(slow)/1000.0)
 	#print(time_out)
 	#print(cook)
-	print("BROKEN BEFORE FOR LOOP")
+	#print("BROKEN BEFORE FOR LOOP")
 	for v in vectors:
 		#print("vector:\t"+v)
 		for i in iPuts:
@@ -99,7 +104,7 @@ def testPage(tP, iPuts=[], vectors=[], sensitive=[], slow=500.0, cook=''):
 			elif(caught != -1):
 				print(caughtHackingList[caught])
 				successfulVectors.append("Caught Hacking input:"+iName+" with vector:"+v)
-	print("BROKEN AFTER FOR LOOP")
+	#print("BROKEN AFTER FOR LOOP")
 	if(len(successfulVectors)==0):
 		successfulVectors.append("No Successful Attacks")
 	tP.vulnerabilities=successfulVectors
@@ -141,10 +146,10 @@ def testPages(pagesAndCookies=[], vectors=[], sensitive=[], rand=False, slow=500
 			iPuts = []
 		testVector = random.choice(vectors)#[random.randrange(len(vectors)-1)]
 		testPage(tP, iPuts, [testVector], sensitive, slow, cookie)
-		print("LOOKING FOR TP VULNS HERE")
-		print(tP.vulnerabilities)
+		#print("LOOKING FOR TP VULNS HERE")
+		#print(tP.vulnerabilities)
 		retList = [tP]+pagesAndCookies[1:]
 	else:
-		recusiveTestPage(discoTree, vectors, sensitive, slow, cookie)
-		retList
+		recursiveTestPage(discoTree, vectors, sensitive, slow, cookie)
+		return pagesAndCookies
 	return retList
