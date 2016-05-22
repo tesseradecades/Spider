@@ -8,6 +8,19 @@ you when you tried to hack it
 """
 caughtHackingList = ["Hacking attempt detected and logged."]
 
+testThreads = []
+treeLock = threading.Lock()
+class TestThread(threading.Thread):
+	def __init__(self, startObject, vectors, sensitive, slow, cookie):
+		threading.Thread.__init__(self)
+		self.startObject = startObject
+		self.vectors = vectors
+		self.sensitive = sensitive
+		self.slow = slow
+		self.cookie = cookie
+	def run(self):
+		recursiveTestPage(self.startObject, self.vectors, self.sensitive, self.slow, self.cookie)
+
 """
 A method to see if the system being tested has successfully caught the spider
 trying to test it.
@@ -52,7 +65,21 @@ def recursiveTestPage(testTree, vectors=[], sensitive=[], slow=500.0, cook=''):
 	iPuts+= utility.getAllOnPage(testTree.response.text, "options")
 	testPage(testTree, iPuts, vectors, sensitive, slow, cook)
 	for c in testTree.childPages:
-		recursiveTestPage(c, vectors, sensitive, slow, cook)
+		#see if any of the spiderLegs are sleeping threads
+		inThread = utility.findInactiveThread(testThreads)
+		
+		#if so, tell it to begin crawling from the found url
+		if( inThread != -1):
+			deadThread = testThreads[inThread]
+			deadThread.startObject = c
+			deadThread.run()
+		else:
+			"""otherwise, create a new one, and tell it to begin its crawl
+			from the found url"""
+			newThread = TestThread(c, vectors, sensitive, slow, cook)
+			testThreads.append(newThread)
+			newThread.start()
+		#recursiveTestPage(c, vectors, sensitive, slow, cook)
 	
 """
 tests a single page for the vulnerabilities represented by a list of vectors
@@ -150,6 +177,12 @@ def testPages(pagesAndCookies=[], vectors=[], sensitive=[], rand=False, slow=500
 		#print(tP.vulnerabilities)
 		retList = [tP]+pagesAndCookies[1:]
 	else:
-		recursiveTestPage(discoTree, vectors, sensitive, slow, cookie)
+		#recursiveTestPage(discoTree, vectors, sensitive, slow, cookie)
+		firstThread = TestThread(discoTree, vectors, sensitive, slow, cookie)
+		testThreads.append(firstThread)
+		firstThread.start()
+		
+		for t in testThreads:
+			t.join()
 		return pagesAndCookies
 	return retList

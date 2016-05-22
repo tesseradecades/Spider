@@ -1,5 +1,6 @@
 __author__="Nathan Evans"
 
+import threading
 from bs4 import BeautifulSoup
 
 """
@@ -15,6 +16,23 @@ def escape(eString=''):
 			holdMe = retString.split(k)
 			retString = holdMe.join(escapeDict[k])
 	return retString
+
+"""
+Searches a list for sleeping threads
+
+threadList - the list to be searched
+
+return - if all threads in the list are alive, return -1, else return the index
+of the first sleeping thread in the list
+"""
+def findInactiveThread(threadList=[]):
+	i = 0
+	for t in threadList:
+		if(not t.isAlive()):
+			return i
+		i+=1
+	return -1
+
 """
 returns a list of objects representing all tags of the specified type on a page
 

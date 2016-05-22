@@ -189,7 +189,7 @@ def crawlHelper(url):
 			#if the found url is an onsite link
 			if((BASE_URL[:testLen] == joinUrl[:testLen]) & ("logout" not in joinUrl)):
 				#see if any of the spiderLegs are sleeping threads
-				inThread = findInactiveThread(spiderLegs)
+				inThread = utility.findInactiveThread(spiderLegs)
 				
 				#if so, tell it to begin crawling from the found url
 				if( inThread != -1):
@@ -208,22 +208,6 @@ def crawlHelper(url):
 	#otherwise, release the lock
 	else:
 		discoLock.release()
-
-"""
-Searches a list for sleeping threads
-
-threadList - the list to be searched
-
-return - if all threads in the list are alive, return -1, else return the index
-of the first sleeping thread in the list
-"""
-def findInactiveThread(threadList=[]):
-	i = 0
-	for t in threadList:
-		if(not t.isAlive()):
-			return i
-		i+=1
-	return -1
 
 """
 attempt to log into the web application being tested from the url represented
@@ -270,17 +254,5 @@ def login(r):
 			#continue crawling the app from the logged in perspective
 			crawlHelper(q.url)
 			print("LOGIN CRAWL ENDED")
-			
-			"""
-			inThread = findInactiveThread(spiderLegs)
-			if( inThread != -1):
-				deadLeg = spiderLegs[inThread]
-				deadLeg.startUrl = q.url
-				deadLeg.run()
-			else:
-				newLeg = spiderLeg(q.url)
-				spiderLegs.append(newLeg)
-				newLeg.start()
-			"""
 	else:
 		print("Couldn't find login params")
