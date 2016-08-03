@@ -10,7 +10,6 @@ RANDOM = False
 SLOW = 500
 
 def main():
-	start = time.time()
 	argParser = argparse.ArgumentParser()
 	argParser.add_argument("command",help="[discover | test]\n Discover - Output a comprehensive, human-readable list of all discovered inputs to the system. Techniques include both crawling and guessing.\n Test - Discover all inputs, then attempt a list of exploit vectors on those inputs. Report potential vulnerabilities.")
 	argParser.add_argument("url",help="Url to run the fuzzer on.")
@@ -59,6 +58,7 @@ def main():
 	if(args.slow):
 		SLOW = float(args.slow)
 	
+	start = time.time()
 	runCommand(args.command.lower(), url)
 	end = time.time()
 	print(end - start)
@@ -67,7 +67,6 @@ def runCommand(command, url):
 	if(command=="discover"):
 		found = ['discover']
 		found.append(discoverCommand(url))
-		#print(found)
 		output.output(found)
 	elif(command=="test"):
 		found = ['test']
