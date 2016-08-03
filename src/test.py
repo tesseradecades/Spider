@@ -48,7 +48,6 @@ r - the response object that was created when testing the page
 return - a boolean value, True if the attack was successful, else False
 """
 def checkAttackSuccess(tP, r, sensitive=[]):
-	#print("checkAttackSuccess")
 	if(r == None):
 		return False
 	for word in sensitive:
@@ -60,7 +59,6 @@ def checkAttackSuccess(tP, r, sensitive=[]):
 	return False
 
 def recursiveTestPage(testTree, vectors=[], sensitive=[], slow=500.0, cook=''):
-	#print("to be implemented later")
 	iPuts = utility.getAllOnPage(testTree.response.text, "input")
 	iPuts+= utility.getAllOnPage(testTree.response.text, "options")
 	testPage(testTree, iPuts, vectors, sensitive, slow, cook)
@@ -101,20 +99,14 @@ def testPage(tP, iPuts=[], vectors=[], sensitive=[], slow=500.0, cook=''):
 	retList = [tP]
 	dosExcept = "Potential Denial of Service"
 	successfulVectors=[]
-	"""
-	iPuts = utility.getAllOnPage(tP.text, "input")
-	iPuts+= utility.getAllOnPage(tP.text, "options")"""
+
 	if(len(iPuts)==0):
 		successfulVectors.append("no input fields to attack")
 	time_out = (float(slow)/1000.0)
-	#print(time_out)
-	#print(cook)
-	#print("BROKEN BEFORE FOR LOOP")
+
 	for v in vectors:
-		#print("vector:\t"+v)
 		for i in iPuts:
 			iName = str(i.get('name'))
-			#print("input:\t"+str(iName))
 			r=None
 			try:
 				r = requests.post(tP.response.url, data={iName:v}, timeout=(float(slow)/1000.0), cookies=cook)
@@ -131,7 +123,6 @@ def testPage(tP, iPuts=[], vectors=[], sensitive=[], slow=500.0, cook=''):
 			elif(caught != -1):
 				print(caughtHackingList[caught])
 				successfulVectors.append("Caught Hacking input:"+iName+" with vector:"+v)
-	#print("BROKEN AFTER FOR LOOP")
 	if(len(successfulVectors)==0):
 		successfulVectors.append("No Successful Attacks")
 	tP.vulnerabilities=successfulVectors
@@ -159,25 +150,21 @@ def testPages(pagesAndCookies=[], vectors=[], sensitive=[], rand=False, slow=500
 	retList = []
 	
 	discoTree = pagesAndCookies[0]
-	#get the necessary cookie in case the spider needs to be logged in
 	cookie = pagesAndCookies[1]
 	discoList = pagesAndCookies[2]
 	if(rand):
 		print("True rando")
-		tP = random.choice(discoList)#[random.randrange(len(discoList)-1)]
+		tP = random.choice(discoList)
 		iPuts = utility.getAllOnPage(tP.response.text, "input")
 		iPuts+= utility.getAllOnPage(tP.response.text, "options")
 		if(len(iPuts) > 0):
 			iPuts = [random.choice(iPuts)]
 		else:
 			iPuts = []
-		testVector = random.choice(vectors)#[random.randrange(len(vectors)-1)]
+		testVector = random.choice(vectors)
 		testPage(tP, iPuts, [testVector], sensitive, slow, cookie)
-		#print("LOOKING FOR TP VULNS HERE")
-		#print(tP.vulnerabilities)
 		retList = [tP]+pagesAndCookies[1:]
 	else:
-		#recursiveTestPage(discoTree, vectors, sensitive, slow, cookie)
 		firstThread = TestThread(discoTree, vectors, sensitive, slow, cookie)
 		testThreads.append(firstThread)
 		firstThread.start()

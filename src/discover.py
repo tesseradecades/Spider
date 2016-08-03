@@ -1,6 +1,7 @@
 __author__ = "Nathan Evans"
 
-import guess, output, requests, threading, utility
+import output, requests, threading, utility
+from guess import guess
 from urlparse import urljoin
 
 """
