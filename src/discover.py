@@ -86,7 +86,7 @@ def checkDiscoveredForUrl(url):
 	discoLock.acquire()
 	for r in DISCOVERED:
 		for u in ([r.response]+r.response.history):
-			if(eUrl == u.url):#if(utility.unescape(url) == u.url):
+			if(eUrl == u.url):
 				discoLock.release()
 				return True
 	discoLock.release()
@@ -101,12 +101,12 @@ def checkDiscoveredForUrl(url):
 def compileOutputTree():
 	global DISCOVERED
 	if(len(DISCOVERED) > 1):
-		sorted = sortOutputObjects(DISCOVERED)
+		sorted = DISCOVERED #sortOutputObjects(DISCOVERED)
 		for s in sorted[1:]:
 			sorted[0].addChildPage(s)
-		#print("\n")
-		#sorted[0].printTree()
 		return sorted[0]
+	elif(len(DISCOVERED) == 1):
+		return DISCOVERED[0]
 	
 def sortOutputObjects(outputObjects=[]):
 	if(len(outputObjects)==0):
@@ -157,7 +157,7 @@ def crawl(url, auth=[], commonWords=[]):
 	BASE_URL = url
 	global COMMON_WORDS
 	COMMON_WORDS = commonWords
-	
+	global DISCOVERED
 	#Start the crawl with a single spiderLeg
 	fstLeg = spiderLeg(url)
 	spiderLegs.append(fstLeg)
@@ -165,10 +165,9 @@ def crawl(url, auth=[], commonWords=[]):
 	
 	for l in spiderLegs:
 		l.join()
-	numPages = len(DISCOVERED)
+	DISCOVERED = sortOutputObjects(DISCOVERED)
 	retList = [compileOutputTree(), COOKIES]
 	retList.append(DISCOVERED)
-	print(len(COMPILED_WORDS))
 	return retList
 
 """
@@ -178,29 +177,30 @@ to DISCOVERED, as representations of the valid web pages it has found
 def crawlHelper(url=""):
 	global COOKIES
 	global DISCOVERED
-	
-	"""acquire the lock on DISCOVERED so that we may check whether the entered 
-	url has already been discovered"""
+
 	#if the entered url has not been discovered yet
 	if( not checkDiscoveredForUrl(url)):
 		"""create a request object from the url and the cookies that have been
 		found so far"""		
-		r = getResponse(url)#requests.get(url, cookies=COOKIES)
+		r = getResponse(url)
 		if(not (r == None)):
 			#in case of redirects, add all responses from r's history to DISCOVERED
+			o = output.outputTree(r)
 			for x in r.history:
 				if( not checkDiscoveredForUrl(x.url)):
 					discoLock.acquire()
 					DISCOVERED.append(output.outputTree(x))
 					discoLock.release()
-			print(r.url)
+			print("r:\t"+r.url)
 			discoLock.acquire()
-			DISCOVERED.append(output.outputTree(r))
+			DISCOVERED.append(o)#output.outputTree(r))
 			discoLock.release()
 		
 			cLock.acquire()
 			commonWords.compileCommonWords(r, COMPILED_WORDS)
 			cLock.release()
+		
+			#TEST HERE
 		
 			global BASE_URL
 			

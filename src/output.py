@@ -5,6 +5,10 @@ import datetime, utility
 class outputTree():
 	def __init__(self, r):
 		self.response = r
+		self.redirects = []
+		for x in self.response.history:
+			if(x.url != self.response.url):
+				self.redirects.append(x.url)
 		self.vulnerabilities = []
 		self.childPages = []
 	def addChildPage(self, cP):
@@ -25,11 +29,6 @@ class outputTree():
 def output(found=[]):
 	print("\nFOUND\n"+str(found))
 	o = open("../output/"+found[0]+datetime.datetime.strftime(datetime.datetime.now(), "%Y%m%d%H%M%S")+".html",'w')
-	"""
-	if( found[0] == 'discover'):
-		o.write(compileDiscoverOutput(found[1]))
-	elif( found[0] == 'test'):
-		o.write(compileTestOutput(found[1]))"""
 	o.write(compileOutput(found[1]))
 	o.close()
 
@@ -51,6 +50,10 @@ def compileOutput(found=[]):
 	return out
 def compileOutputHelper(outputLeaf):
 	retString = "URL: "+outputLeaf.response.url+"<br/>"
+	retString+= "Redirects:<br/><ol>"
+	for r in outputLeaf.redirects:
+		retString+="<li>"+r+"</li>"
+	retString+="</ol>"
 	retString+= "Vulnerabilies:<br/><ol>"
 	for v in outputLeaf.vulnerabilities:
 		retString+= "<li>"+utility.escape(v)+"</li>"
