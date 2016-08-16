@@ -1,1 +1,1 @@
-__all__ = ['guess']
+__all__ = ['commonWords','guess','leet']
