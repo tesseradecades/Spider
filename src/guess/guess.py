@@ -1,7 +1,28 @@
 __author__ = "Nathan Evans"
 
 import commonWords, leet
+
+fileExt = ['.jsp', ".html", ".asp"]
+
+def compileUrlGuesses(url="", cWords={}):
+	guesses = []
+	totalWords = 0
+	commonlyUsed = []
 	
+	words = cWords.keys()
+	for k in words:
+		totalWords+=cWords[k]
+	#the total number of words used divided by the number of unique words
+	avgOcc = totalWords / len(cWords)
+	
+	for k in words:
+		if(cWords[k] >= avgOcc):
+			commonlyUsed.append(k)
+	
+	"""for k in commonlyUsed:
+		guesses.append(url+"/"+k)"""	
+	return guesses
+
 """
 A method to "fuzzy search" all html objects in a given list for the first one
 to nearly match any of the words in a given list of strings

@@ -26,7 +26,7 @@ A list of words to be used for guessing hidden urls and login credentials
 COMMON_WORDS = []
 
 COMPILED_WORDS = {}
-
+cLock = threading.Lock()
 """
 The cookies gathered from crawling the web application. Should be passed to all
 requests in this file to ensure the crawler remains logged in where necessary
@@ -166,11 +166,8 @@ def crawl(url, auth=[], commonWords=[]):
 	for l in spiderLegs:
 		l.join()
 	numPages = len(DISCOVERED)
-	#compile outputTree
-	#compileOutputTree()
 	retList = [compileOutputTree(), COOKIES]
 	retList.append(DISCOVERED)
-	#print(COMPILED_WORDS)
 	print(len(COMPILED_WORDS))
 	return retList
 
@@ -201,15 +198,22 @@ def crawlHelper(url=""):
 			DISCOVERED.append(output.outputTree(r))
 			discoLock.release()
 		
+			cLock.acquire()
 			commonWords.compileCommonWords(r, COMPILED_WORDS)
+			cLock.release()
 		
 			global BASE_URL
 			
-			#for every anchor tag on the discovered page
+			pagesToCrawl = []
 			for a in utility.getAllOnPage(r.text, "a"):
+				pagesToCrawl.append(a.get('href'))
+			pagesToCrawl.extend(guess.compileUrlGuesses(r.url, COMPILED_WORDS))
+			
+			#for every anchor tag on the discovered page
+			for a in pagesToCrawl:
 			
 				#get the url of the anchor tag
-				joinUrl = urljoin(r.url, a.get('href'))
+				joinUrl = urljoin(r.url, a)#a.get('href'))
 			
 				testLen = len(BASE_URL) - 1
 				#if the found url is an onsite link
