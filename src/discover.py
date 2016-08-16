@@ -1,7 +1,7 @@
 __author__ = "Nathan Evans"
 
 import output, requests, threading, utility
-from guess import guess
+from guess import *
 from urlparse import urljoin
 
 """
@@ -21,6 +21,19 @@ discovered that doesn't begin with the BASE_URL, it will be ignored
 BASE_URL = ''
 
 """
+A list of words to be used for guessing hidden urls and login credentials
+"""
+COMMON_WORDS = []
+
+COMPILED_WORDS = {}
+
+"""
+The cookies gathered from crawling the web application. Should be passed to all
+requests in this file to ensure the crawler remains logged in where necessary
+"""
+COOKIES = None#{'security': 'low'}
+
+"""
 A list of response objects that were found to have urls that exist within the
 web application being tested
 """
@@ -33,15 +46,11 @@ to write to the list at the same time
 discoLock = threading.Lock()
 
 """
-A list of words to be used for guessing hidden urls and login credentials
+A list of guessed urls that returned an error message
 """
-COMMON_WORDS = []
+FAILED_URLS = []
 
-"""
-The cookies gathered from crawling the web application. Should be passed to all
-requests in this file to ensure the crawler remains logged in where necessary
-"""
-COOKIES = None#{'security': 'low'}
+fLock = threading.Lock()
 
 OUTPUT_TREE = None
 
@@ -73,10 +82,20 @@ returns - a boolean, True if the url has already been found, False otherwise
 """
 def checkDiscoveredForUrl(url):
 	global DISCOVERED
+	eUrl = utility.unescape(url)
+	discoLock.acquire()
 	for r in DISCOVERED:
 		for u in ([r.response]+r.response.history):
-			if(utility.unescape(url) == u.url):
+			if(eUrl == u.url):#if(utility.unescape(url) == u.url):
+				discoLock.release()
 				return True
+	discoLock.release()
+	fLock.acquire()
+	for u in FAILED_URLS:
+		if(eUrl == u):
+			fLock.release()
+			return True		
+	fLock.release()
 	return False
 
 def compileOutputTree():
@@ -151,64 +170,82 @@ def crawl(url, auth=[], commonWords=[]):
 	#compileOutputTree()
 	retList = [compileOutputTree(), COOKIES]
 	retList.append(DISCOVERED)
+	#print(COMPILED_WORDS)
+	print(len(COMPILED_WORDS))
 	return retList
 
 """
 Recursively crawls through the web application, adding valid response objects
 to DISCOVERED, as representations of the valid web pages it has found
 """
-def crawlHelper(url):
+def crawlHelper(url=""):
 	global COOKIES
 	global DISCOVERED
 	
 	"""acquire the lock on DISCOVERED so that we may check whether the entered 
 	url has already been discovered"""
-	discoLock.acquire()
-	
 	#if the entered url has not been discovered yet
 	if( not checkDiscoveredForUrl(url)):
 		"""create a request object from the url and the cookies that have been
 		found so far"""		
-		r = requests.get(url, cookies=COOKIES)
-		#in case of redirects, add all responses from r's history to DISCOVERED
-		for x in r.history:
-			if( not checkDiscoveredForUrl(x.url)):
-				DISCOVERED.append(output.outputTree(x))
-		print(r.url)
-		DISCOVERED.append(output.outputTree(r))
-		discoLock.release()
-	
-		global BASE_URL
+		r = getResponse(url)#requests.get(url, cookies=COOKIES)
+		if(not (r == None)):
+			#in case of redirects, add all responses from r's history to DISCOVERED
+			for x in r.history:
+				if( not checkDiscoveredForUrl(x.url)):
+					discoLock.acquire()
+					DISCOVERED.append(output.outputTree(x))
+					discoLock.release()
+			print(r.url)
+			discoLock.acquire()
+			DISCOVERED.append(output.outputTree(r))
+			discoLock.release()
 		
-		#for every anchor tag on the discovered page
-		for a in utility.getAllOnPage(r.text, "a"):
+			commonWords.compileCommonWords(r, COMPILED_WORDS)
 		
-			#get the url of the anchor tag
-			joinUrl = urljoin(r.url, a.get('href'))
-		
-			testLen = len(BASE_URL) - 1
-			#if the found url is an onsite link
-			if((BASE_URL[:testLen] == joinUrl[:testLen]) & ("logout" not in joinUrl)):
-				#see if any of the spiderLegs are sleeping threads
-				inThread = utility.findInactiveThread(spiderLegs)
-				
-				#if so, tell it to begin crawling from the found url
-				if( inThread != -1):
-					deadLeg = spiderLegs[inThread]
-					deadLeg.startUrl = joinUrl
-					deadLeg.run()
-				else:
-					"""otherwise, create a new one, and tell it to begin its crawl
-					from the found url"""
-					newLeg = spiderLeg(joinUrl)
-					spiderLegs.append(newLeg)
-					newLeg.start()
-		#if we hae reached the login page of the web application, attempt to login
-		if((len(AUTH) == 3) and ("/login" in r.url) and (("/"+AUTH[0]+"/") in r.url)):
-			login(r)
+			global BASE_URL
+			
+			#for every anchor tag on the discovered page
+			for a in utility.getAllOnPage(r.text, "a"):
+			
+				#get the url of the anchor tag
+				joinUrl = urljoin(r.url, a.get('href'))
+			
+				testLen = len(BASE_URL) - 1
+				#if the found url is an onsite link
+				if((BASE_URL[:testLen] == joinUrl[:testLen]) & ("logout" not in joinUrl)):
+					#see if any of the spiderLegs are sleeping threads
+					inThread = utility.findInactiveThread(spiderLegs)
+					
+					#if so, tell it to begin crawling from the found url
+					if( inThread != -1):
+						deadLeg = spiderLegs[inThread]
+						deadLeg.startUrl = joinUrl
+						deadLeg.run()
+					else:
+						"""otherwise, create a new one, and tell it to begin its crawl
+						from the found url"""
+						newLeg = spiderLeg(joinUrl)
+						spiderLegs.append(newLeg)
+						newLeg.start()
+			#if we hae reached the login page of the web application, attempt to login
+			if((len(AUTH) == 3) and ("/login" in r.url) and (("/"+AUTH[0]+"/") in r.url)):
+				login(r)
 	#otherwise, release the lock
 	else:
-		discoLock.release()
+		pass
+
+
+def getResponse(url=""):
+	r = None
+	try:
+		r = requests.get(url, cookies=COOKIES)
+	except exception:
+		fLock.acquire()
+		FAILED_URLS.append(url)
+		fLock.release()
+	finally:
+		return r
 
 """
 attempt to log into the web application being tested from the url represented
