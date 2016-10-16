@@ -13,7 +13,10 @@ def compileUrlGuesses(url="", cWords={}):
 	for k in words:
 		totalWords+=cWords[k]
 	#the total number of words used divided by the number of unique words
-	avgOcc = totalWords / len(cWords)
+	if(len(cWords) != 0):
+		avgOcc = totalWords / len(cWords)
+	else:
+		avgOcc = 0
 	
 	for k in words:
 		if(cWords[k] >= avgOcc):
