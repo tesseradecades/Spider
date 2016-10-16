@@ -1,6 +1,6 @@
 __author__ = "Nathan Evans"
 
-import datetime, utility
+import datetime, inspect, os, utility
 
 class outputTree():
 	def __init__(self, r):
@@ -28,7 +28,11 @@ class outputTree():
 			
 def output(found=[]):
 	print("\nFOUND\n"+str(found))
-	o = open("../output/"+found[0]+datetime.datetime.strftime(datetime.datetime.now(), "%Y%m%d%H%M%S")+".html",'w')
+	outputDir = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))+"/../output/"
+	print(outputDir)
+	if( not os.path.isdir(outputDir) ):
+		os.makedirs(outputDir)
+	o = open(outputDir+found[0]+datetime.datetime.strftime(datetime.datetime.now(), "%Y%m%d%H%M%S")+".html",'w')
 	o.write(compileOutput(found[1]))
 	o.close()
 
