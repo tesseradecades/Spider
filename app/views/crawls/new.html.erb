@@ -1,0 +1,28 @@
+<h1>New Crawl</h1>
+
+<%= form_for @crawl do |f| %>
+ 
+  <% if @crawl.errors.any? %>
+    <div id="error_explanation">
+      <h2>
+        <%= pluralize(@crawl.errors.count, "error") %> prohibited
+        this crawl from being saved:
+      </h2>
+      <ul>
+        <% @crawl.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+ 
+  <p>
+    <%= f.label :app_url %><br>
+    <%= f.text_field :app_url %>
+  </p>
+
+  <p>
+    <%= f.submit %>
+  </p>
+ 
+<% end %>

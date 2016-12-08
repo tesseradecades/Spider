@@ -1,8 +1,9 @@
 Rails.application.routes.draw do
+  # For details on the DSL available within this file, see http://guides.rubyonrails.org/routing.html
   get 'welcome/index'
   root 'welcome#index'
 
-  get 'new_crawl' => 'crawl#new', :as => "new_crawl"
-
-  # For details on the DSL available within this file, see http://guides.rubyonrails.org/routing.html
+  get 'new_crawls' => 'crawls#new', :as => "new_crawl"
+  resources :crawls
+  
 end
